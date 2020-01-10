@@ -5,10 +5,17 @@
   <arg name="assemble_cloud" default="/multisense/lidar_scan_filtered"/>
   <arg name="run_distance_filters" default="true" />
   <arg name="local" default="false" />
+
+  <node name="filter_unreliable_scan" pkg="jsk_tilt_laser" type="filter_unreliable_scan.py" output="screen">
+    <param name="rotate_th"   value="0.5236" />
+  </node>
+  <!-- <remap from="input_scan"  to="/multisense/lidar_scan"/> -->
+  <!-- <remap from="output_scan" to="/multisense/reliable_lidar_scan"/> -->
+
   <node name="tilt_scan_to_cloud"
         pkg="laser_filters" type="scan_to_cloud_filter_chain"
         clear_params="true" output="screen">
-    <remap from="scan" to="/multisense/lidar_scan" />
+    <remap from="scan" to="/multisense/reliable_lidar_scan" />
     <rosparam subst_value="true">
       scan_filter_chain:
       - name: shadows
