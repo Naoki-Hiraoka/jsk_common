@@ -2,7 +2,6 @@
 # from __future__ import print_function
 
 import sys
-import time
 import rospy
 import rospkg
 from std_msgs.msg import Int32
@@ -38,7 +37,7 @@ class FilterUnreliableScan:
   def ScanCallback(self, data):
     if self.use_flywheel or self.fast_rotate:
       print ("Scan is unreliable!")
-      time.sleep(2.0)
+      rospy.sleep(2.0)
     else:
       self.pub_reliable_lidar_scan.publish(data)
 
