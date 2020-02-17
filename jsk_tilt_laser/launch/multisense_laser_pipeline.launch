@@ -8,6 +8,7 @@
 
   <node name="filter_unreliable_scan" pkg="jsk_tilt_laser" type="filter_unreliable_scan.py" output="screen">
     <param name="rotate_th"   value="0.5236" />
+    <param name="sleep_time"  value="5" />
   </node>
   <!-- <remap from="input_scan"  to="/multisense/lidar_scan"/> -->
   <!-- <remap from="output_scan" to="/multisense/reliable_lidar_scan"/> -->

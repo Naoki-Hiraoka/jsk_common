@@ -12,6 +12,7 @@ class FilterUnreliableScan:
 
   def __init__(self):
     self.rotate_th    = float(rospy.get_param('~rotate_th', 0.5236)) # 30 deg/s
+    self.sleep_time   = float(rospy.get_param('~sleep_time', 2))
     self.fast_rotate  = False
     self.use_flywheel = False
 
@@ -37,7 +38,7 @@ class FilterUnreliableScan:
   def ScanCallback(self, data):
     if self.use_flywheel or self.fast_rotate:
       print ("Scan is unreliable!")
-      rospy.sleep(2.0)
+      rospy.sleep(self.sleep_time)
     else:
       self.pub_reliable_lidar_scan.publish(data)
 
