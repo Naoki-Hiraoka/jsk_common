@@ -4,10 +4,10 @@ from __future__ import print_function
 
 import unittest
 import os
+import time
 
 from jsk_topic_tools.master_util import isMasterAlive
 import rospy
-
 
 PKG = 'jsk_topic_tools'
 NAME = 'test_python_master_util'
@@ -21,6 +21,7 @@ class TestPythonMasterUtil(unittest.TestCase):
         os.environ["ROS_MASTER_URI"] = self.original_uri
 
     def test_isMasterAlive(self):
+        time.sleep(3) # wait for machine
         self.assertTrue(isMasterAlive())
         self.assertTrue(isMasterAlive(10,1))
         os.environ["ROS_MASTER_URI"] = 'http://baduri:11311'

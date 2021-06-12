@@ -17,13 +17,13 @@ def isMasterAlive(timeout_sec=10, trials=1):
         # first check the host is available
         master_host = urlparse.urlsplit(rospy.core.rosgraph.get_master_uri()).hostname
         for i in range(trials):
-            response = os.system("ping -W {} -c 1 {} > /dev/null".format(timeout_sec, master_host))
+            response = os.system("ping -W {} -c 1 {}".format(timeout_sec, master_host))
             if response == 0:
                 # host machine is available, immediately break from for loop
                 break
             # Ping failed trials times in a row, the master computer is regarded as dead.
             if i == trials - 1:
-                print("master machine looks down because ping fails with timeout={} {} times".format(timeout_sec, trials))
+                print("master machine {} looks down because ping fails with timeout={} {} times".format(master_host, timeout_sec, trials))
                 return False
             else:
                 print("ping fails {}/{} times".format(i, trials))
