@@ -3,13 +3,16 @@ cmake_minimum_required(VERSION 2.8.3)
 project(jsk_topic_tools)
 
 # Use ccache if installed to make it fast to generate object files
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif(CCACHE_FOUND)
+if (CMAKE_VERSION VERSION_LESS 3.4)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+  endif(CCACHE_FOUND)
+endif()
 
 find_package(catkin REQUIRED COMPONENTS
+  diagnostic_updater
   dynamic_reconfigure
   eigen_conversions
   geometry_msgs
@@ -23,6 +26,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   topic_tools
 )
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/jsk_topic_tools/nodelet_version.h.in
+  ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_INCLUDE_DESTINATION}/jsk_topic_tools/nodelet_version.h)
+
 catkin_python_setup()
 add_message_files(
   FILES TopicInfo.msg
@@ -140,6 +148,8 @@ if (CATKIN_ENABLE_TESTING)
   jsk_topic_tools_add_rostest(test/test_connection_based_transport.test)
   jsk_topic_tools_add_rostest(test/test_stealth_relay.test)
   jsk_topic_tools_add_rostest(test/test_synchronized_throttle.test)
+  jsk_topic_tools_add_rostest(test/test_pose_stamped_publisher.test)
+  jsk_topic_tools_add_rostest(test/test_python_master_util.test)
   catkin_add_nosetests(src/jsk_topic_tools/tests)
   catkin_add_gtest(test_rosparam_utils src/tests/test_rosparam_utils.cpp)
   target_link_libraries(test_rosparam_utils ${PROJECT_NAME})
@@ -153,7 +163,10 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_nodelet_log_utils test/test_nodelet_log_utils.test test/test_nodelet_log_utils.cpp)
   target_link_libraries(test_nodelet_log_utils ${PROJECT_NAME})
   add_dependencies(test_nodelet_log_utils jsk_topic_tools_test)
-  if("$ENV{ROS_DISTRO}" STRGREATER "hydro")
+  if("$ENV{ROS_DISTRO}" STRGREATER "indigo")
+    # rostest/publishtest is available on kinetic and later
+    jsk_topic_tools_add_rostest(test/test_standalone_complexed_nodelet.test)
+  elseif("$ENV{ROS_DISTRO}" STRGREATER "hydro")
     # FIXME: jsk_tools/test_topic_published.py does not work on hydro travis/jenkins
     # https://github.com/jsk-ros-pkg/jsk_common/pull/1293#issuecomment-164158260
     jsk_topic_tools_add_rostest(test/test_tf_to_pose.test)

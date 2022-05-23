@@ -21,7 +21,7 @@ import re
 try:
     import colorama
 except:
-    print "Please install colorama by pip install colorama"
+    print("Please install colorama by pip install colorama")
     sys.exit(1)
 from colorama import Fore, Style
 
@@ -194,7 +194,7 @@ class BagPlotter():
             self.setGlobalOptions(data)
             self.setPlotOptions(data)
     def readOption(self, option, name, default_value):
-        if option.has_key(name):
+        if name in option:
             return option[name]
         else:
             return default_value
@@ -213,7 +213,7 @@ class BagPlotter():
         self.all_topics = set()
         self.topic_data = []
         for opt in plot_options:
-            if not opt.has_key("title"):
+            if "title" not in opt:
                 raise BagPlotterException("plot config requires title section")
             opt["type"] = self.readOption(opt, "type", "line")
             opt["legend"] = self.readOption(opt, "legend", True)
@@ -221,15 +221,15 @@ class BagPlotter():
             opt["time_offset"] = self.readOption(opt, "time_offset", 0)
             if self.global_options["layout"] == "manual" and opt["layout"] == None:
                 raise BagPlotterException("Need to specify layout field for manual layout")
-            if not opt.has_key("topic"):
+            if "topic" not in opt:
                 raise BagPlotterException("plots config requires topic section")
-            if not opt.has_key("field"):
+            if "field" not in opt:
                 raise BagPlotterException("plots config requires fields section")
             if isinstance(opt["topic"], str):
                 opt["topic"] = [opt["topic"]]
             if isinstance(opt["field"], str):
                 opt["field"] = [opt["field"]]
-            if not opt.has_key("color"):
+            if "color" not in opt:
                 opt["color"] = [None]*len(opt["topic"])
             if not isinstance(opt["color"], list):                
                 opt["color"] = [opt["color"]]
@@ -304,7 +304,7 @@ class BagPlotter():
                     counter = counter + 1
                 pbar.finish()
         if no_valid_data:
-            print Fore.RED + "Cannot find valid data in bag files, valid topics are:\n%s" % ", ".join(self.all_topics) + Fore.RESET
+            print(Fore.RED + "Cannot find valid data in bag files, valid topics are:\n%s" % ", ".join(self.all_topics) + Fore.RESET)
             return
         title = ("""Plot %s using %s from [%s] to [%s] (%d secs)""" %
                  (", ".join(self.bag_file),
@@ -344,9 +344,9 @@ class BagPlotter():
         elif event.key == "q" or event.key == "Q":
             self.runp = False
     def printUsage(self):
-        print "Usage::"
-        print "  l or L:  toggle legend"
-        print "  q or Q:  quit"
+        print("Usage::")
+        print("  l or L:  toggle legend")
+        print("  q or Q:  quit")
     def toggleLegend(self):
         self.show_legend = not self.show_legend
         plt.clf()

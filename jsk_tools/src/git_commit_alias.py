@@ -4,8 +4,12 @@
 import subprocess
 from pygithub3 import Github
 
+# use raw_input for python2 c.f. https://stackoverflow.com/questions/5868506/backwards-compatible-input-calls-in-python
+if hasattr(__builtins__, 'raw_input'):
+    input = raw_input
+
 from getpass import getpass
-user = raw_input('GitHub User name: ')
+user = input('GitHub User name: ')
 pw = getpass('Password: ')
 
 gh = Github(login=user, password=pw)
@@ -26,7 +30,7 @@ for page in result:
             subprocess.check_call(["git", "config", "--global", 
                                    "alias.%s" % alias_command,
                                    alias])
-            print "Added %s" % (alias_command)
+            print("Added %s" % (alias_command))
         except:
-            print "Failed to generate alias for %s" % (member.login)
+            print("Failed to generate alias for %s" % (member.login))
 

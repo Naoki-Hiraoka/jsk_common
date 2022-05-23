@@ -8,6 +8,8 @@ import os
 import os.path as osp
 import pickle as pkl
 import sys
+import subprocess
+import signal
 
 import numpy as np
 import PIL.Image
@@ -89,6 +91,13 @@ class DataCollectionServer(object):
             raise ValueError('Unexpected method: {}'.format(method))
         use_message_filters = rospy.get_param('~message_filters', False)
         self.timestamp_save_dir = rospy.get_param('~timestamp_save_dir', True)
+        self.wait_timer = rospy.get_param('~wait_timer', False)
+        self.wait_save_request = rospy.get_param('~wait_save_request', False)
+        self.rosbag_topics = rospy.get_param('~rosbag_topics', [])
+        if self.rosbag_topics:
+            self.rosbag_process = None
+            self.rosbag_prefix = rospy.get_param('~rosbag_prefix', 'rosbag')
+            self.rosbag_options = rospy.get_param('~rosbag_options', '').split()
 
         if rospy.has_param('~with_request'):
             rospy.logwarn('Deprecated param: ~with_request, Use ~method')
@@ -160,6 +169,8 @@ class DataCollectionServer(object):
 
     def reconfig_cb(self, config, level):
         self.save_dir = osp.expanduser(config['save_dir'])
+        # remove newline and whitespace.
+        self.save_dir = self.save_dir.rstrip()
         if not osp.exists(self.save_dir):
             os.makedirs(self.save_dir)
         return config
@@ -184,6 +195,20 @@ class DataCollectionServer(object):
             'stamp': msg.header.stamp if msg._has_header else rospy.Time.now(),
             'msg': msg
         }
+
+    def start_rosbag(self):
+        postfix = rospy.Time.now()
+        filename = os.path.join(
+            self.save_dir, self.rosbag_prefix + '-{0}'.format(postfix))
+        cmd_rosbag = ['rosbag', 'record']
+        cmd_rosbag.extend(self.rosbag_topics)
+        cmd_rosbag.extend(['--output-name', filename])
+        cmd_rosbag.extend(self.rosbag_options)
+        self.rosbag_process = subprocess.Popen(cmd_rosbag)
+
+    def end_rosbag(self):
+        if self.rosbag_process:
+            os.kill(self.rosbag_process.pid, signal.SIGTERM)
 
     def save_topic(self, topic, msg, savetype, filename):
         if savetype == 'ColorImage':
@@ -275,13 +300,30 @@ class DataCollectionServer(object):
 
     def start_service_cb(self, req):
         self.start = True
+        if self.rosbag_topics:
+            self.start_rosbag()
         return TriggerResponse(success=True)
 
     def end_service_cb(self, req):
         self.start = False
+        if self.rosbag_topics:
+            self.end_rosbag()
         return TriggerResponse(success=True)
 
+    def wait_msgs_update(self):
+        now = rospy.Time.now()
+        for msg_key in self.msg.keys():
+            time_diff = None
+            while time_diff is None or time_diff < 0:
+                stamp = self.msg[msg_key]['stamp']
+                time_diff = (stamp - now).to_sec()
+                rospy.logwarn_throttle(
+                    1.0, "msgs is not updated after service request")
+                rospy.sleep(0.05)
+
     def service_cb(self, req):
+        if self.wait_save_request:
+            self.wait_msgs_update()
         result, msg = self._save()
         if result:
             return TriggerResponse(success=True, message=msg)
@@ -289,6 +331,8 @@ class DataCollectionServer(object):
             return TriggerResponse(success=False, message=msg)
 
     def sync_service_cb(self, req):
+        if self.wait_save_request:
+            self.wait_msgs_update()
         result, msg = self._sync_save()
         if result:
             return TriggerResponse(success=True, message=msg)
@@ -296,10 +340,14 @@ class DataCollectionServer(object):
             return TriggerResponse(success=False, message=msg)
 
     def timer_cb(self, event):
+        if self.wait_timer:
+            self.wait_msgs_update()
         if self.start:
             result, msg = self._save()
 
     def sync_timer_cb(self, event):
+        if self.wait_timer:
+            self.wait_msgs_update()
         if self.start:
             result, msg = self._sync_save()
 

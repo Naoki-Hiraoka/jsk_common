@@ -9,6 +9,10 @@ import unittest
 
 import numpy as np
 import scipy.misc
+from distutils.version import StrictVersion
+import scipy.version
+if (StrictVersion(scipy.version.version) > StrictVersion('1.2.0')):
+    import imageio
 import yaml
 
 import rospy
@@ -41,7 +45,10 @@ class TestDataCollectionServer(unittest.TestCase):
                     data = yaml.load(f)
                     self.assertEqual(data['data'], 'sample')
             elif target == 'image':
-                img = scipy.misc.imread(osp.join(sub_dir, 'sample_image.png'))
+                if (StrictVersion(scipy.version.version) > StrictVersion('1.2.0')):
+                    img = imageio.imread(osp.join(sub_dir, 'sample_image.png'))
+                else:
+                    img = scipy.misc.imread(osp.join(sub_dir, 'sample_image.png'))
                 self.assertTrue(np.allclose(img, scipy.misc.face()))
             else:
                 raise ValueError('Unexpected target: {}'.format(target))
@@ -57,6 +64,7 @@ class TestDataCollectionServer(unittest.TestCase):
         self.assertTrue(ret.success)
 
         save_dir = rospy.get_param('/save_dir_request')
+        save_dir = save_dir.rstrip()
         save_dir = osp.expanduser(save_dir)
         self.check(save_dir, target='string')
 
@@ -71,6 +79,7 @@ class TestDataCollectionServer(unittest.TestCase):
         self.assertTrue(ret.success)
 
         save_dir = rospy.get_param('/save_dir_timer')
+        save_dir = save_dir.rstrip()
         save_dir = osp.expanduser(save_dir)
         self.check(save_dir, target='string')
 
@@ -79,6 +88,7 @@ class TestDataCollectionServer(unittest.TestCase):
         rospy.sleep(2)
 
         save_dir = rospy.get_param('/save_dir_all')
+        save_dir = save_dir.rstrip()
         save_dir = osp.expanduser(save_dir)
         self.check(save_dir, target='image')
 

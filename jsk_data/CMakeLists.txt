@@ -53,7 +53,11 @@ endif()
 install(DIRECTORY launch rvizconfig sample tests
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
+  PATTERN tests/test_data_collection_server.py EXCLUDE
 )
+catkin_install_python(PROGRAMS
+  tests/test_data_collection_server.py
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/tests/)
 
 if (CATKIN_ENABLE_TESTING)
   find_package(roslint REQUIRED)
@@ -68,9 +72,19 @@ if (CATKIN_ENABLE_TESTING)
     roslaunch_add_file_check(launch/baxter_play.launch)
     roslaunch_add_file_check(launch/baxter_record.launch)
   endif()
+  find_package(fetch_description QUIET)
+  if(fetch_description_FOUND)
+    roslaunch_add_file_check(launch/fetch_play.launch)
+    roslaunch_add_file_check(launch/fetch_record.launch)
+  endif()
   find_package(pr2_description QUIET)
+  find_package(openni_launch QUIET)
   if(pr2_description_FOUND)
-    roslaunch_add_file_check(launch/pr2_play.launch)
+    if(openni_launch_FOUND)
+      roslaunch_add_file_check(launch/pr2_play.launch)
+    else()
+      roslaunch_add_file_check(launch/pr2_play.launch "launch_openni:=false")
+    endif()
   endif()
   if(0)
     # pr2_record could not run on travis

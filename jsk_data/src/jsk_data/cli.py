@@ -20,6 +20,9 @@ from jsk_data.ssh import get_user_by_hostname
 from jsk_data.util import filename_with_timestamp
 from jsk_data.util import google_drive_file_url
 
+# use raw_input for python2 c.f. https://stackoverflow.com/questions/5868506/backwards-compatible-input-calls-in-python
+if hasattr(__builtins__, 'raw_input'):
+    input = raw_input
 
 __all__ = ('cli', 'cmd_get', 'cmd_ls', 'cmd_put', 'cmd_pubinfo')
 
@@ -54,7 +57,7 @@ def cmd_get(public, query):
     if not query:
         if public:
             lines = list_gdrive().splitlines()
-            candidates = [l.split()[1] for l in lines]
+            candidates = [line.split()[1] for line in lines]
         else:
             candidates = _list_aries_files()
         selected = percol_select(candidates)
@@ -131,7 +134,7 @@ def cmd_put(filename, public, stamped):
         if filename_org != filename:
             print('Filename is being changed: {0} -> {1}'
                   .format(filename_org, filename))
-            yn = raw_input('Are you sure?[Y/n]: ')
+            yn = input('Are you sure?[Y/n]: ')
             if yn not in 'yY':
                 sys.stderr.write('Aborted!')
                 sys.exit(1)

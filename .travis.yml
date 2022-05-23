@@ -1,12 +1,20 @@
-language: c++
 sudo: true
-dist: trusty
+dist: bionic
+language: python
 services:
   - docker
+addons:
+  apt:
+    packages:
+    - 2to3
 cache:
+  apt: true
+  pip: true
   directories:
     - $HOME/.ccache
     - $HOME/.cache/pip
+    - $HOME/apt-cacher-ng
+    - $HOME/.ros/data
 notifications:
   email:
     on_success: always
@@ -21,12 +29,16 @@ env:
     - USE_TRAVIS=true
     - USE_DOCKER=true
   matrix:
+    - CHECK_PYTHON3_COMPILE=true
     - ROS_DISTRO=indigo USE_DEB=true
     - ROS_DISTRO=indigo USE_DEB=true BEFORE_SCRIPT='$CI_SOURCE_PATH/.travis_before_script_opencv3.bash'
     - ROS_DISTRO=kinetic USE_DEB=true
-    - ROS_DISTRO=lunar   USE_DEB=true
+    - ROS_DISTRO=lunar   USE_DEB=false
     - ROS_DISTRO=melodic USE_DEB=true
-script: source .travis/travis.sh
+    - ROS_DISTRO=noetic  USE_DEB=true
+script:
+  - if [ "${CHECK_PYTHON3_COMPILE}" == "true" ]; then bash -c "ret=0; trap 'ret=1' ERR; python3 -m compileall .; 2to3 -w -f except -f execfile -f has_key -f import -f raw_input -f zip .; git diff --exit-code . :^.travis > /dev/null; echo Exitting with \$ret; exit \$ret"; exit $?; fi
+  - .travis/travis.sh
 after_success:
   # trigger build of jsk-docs.readthedocs.org
   - curl -X POST -d "branches=master" -d "token=da477cb4ef53d533aeb51c2b43e8baca6202baca" https://readthedocs.org/api/v2/webhook/jsk-docs/9094/
